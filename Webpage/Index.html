@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en" > <!-- Needed for Screenreaders !-->
+<head>
+<!-- UTF-8 character set covers most characters in the world -->
+ <meta charset="utf-8">
+ <!-- Make page respond to screen size !-->
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--Include a Title. Used by Search Engines -->
+<title> Temperature Reading WebServer </title>
+<style>
+ 
+ <!--choose good contrast between background and foreground colours
+ body { 
+background-color: DodgerBlue
+ }
+.flex-Container{
+ display: flex;
+ flex-direction: column;
+ background-color: rgb(7, 216, 153);
+ align-items: center;
+ }
+ h1{
+ font: bold;
+ font-size: 40px;
+ font-family: Arial;
+ color: rgb(218, 241, 9);
+text-align: center;
+ }
+ p{
+ font-size: 25px;
+ font-family: Arial;
+ color: rgb(163, 15, 15);
+text-align: center;
+ } 
+ th, td {
+ font-size: 25px;
+ padding: 8px;
+ text-align: left;
+
+ border-bottom: 1px solid #ddd;
+}
+</style>
+</head>
+<body>
+<div class="flex-Container">
+<h1> Herbinside </h1>
+ 
+<p>My smart indoor herb garden</p>
+ 
+
+
+
+ </div>
+ <p>Sensor chart</p>
+ <h2 float="left" >
+    <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2712952/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&title=Temperature&type=line"></iframe>
+
+ </h2>
+ <h2 float="right">
+    <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2712952/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&title=Air+Moisture&type=line"></iframe>
+
+ </h2>
+
+
+
+</body>
+</html>
+;
+
+
