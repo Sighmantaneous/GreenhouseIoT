@@ -1,10 +1,14 @@
 .image-container {
     display: flex;
     justify-content: center;
-    gap: 10px; /* Adjust spacing between images */
+    gap: 10px; 
 }
 .image-container img {
-    width: 200px; /* Adjust image size as needed */
+    width: 200px; 
     height: auto;
-    border-radius: 10px; /* Optional: rounded corners */
+    border-radius: 10px; 
+}
+
+.h1{
+    text-align: center;
 }
