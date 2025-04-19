@@ -4,7 +4,7 @@ String homepage = R"rawliteral(
 <html lang="en">
 <head>
   <meta charset="utf8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Herbinside</title>
   <style>
     body {
@@ -13,6 +13,7 @@ String homepage = R"rawliteral(
       text-align: center;
       margin: 0;
       padding: 20px;
+    
     }
 
     .dashboard {
@@ -51,7 +52,7 @@ String homepage = R"rawliteral(
   </style>
 </head>
 <body>
-  <h1>🌿 Herbinside Sensor Dashboard</h1>
+  <h1>🌿 Herbinside IoT Greenhouse</h1>
 
   <div class="dashboard">
 
@@ -80,6 +81,40 @@ String homepage = R"rawliteral(
     </div>
 
   </div>
+
+  <script> 
+
+    function fetchData() { 
+
+      fetch('/getValues') 
+
+        .then(response => response.json()) 
+
+        .then(data => { 
+
+          document.getElementById("tempValue").textContent = data.temperature + " °C"; 
+
+          document.getElementById("humidityValue").textContent = data.humidity + " %"; 
+
+          document.getElementById("moistureValue").textContent = data.moisture + " %"; 
+
+        }) 
+
+        .catch(error => { 
+
+          console.error('Error fetching sensor data:', error); 
+
+        }); 
+
+    } 
+
+  
+
+    setInterval(fetchData, 10000); 
+
+    fetchData(); 
+
+  </script>
 </body>
 </html>
   )rawliteral";
