@@ -5,6 +5,8 @@
 #include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
 #include "DFRobot_AHT20.h"
 #include <ESP32Servo.h>
+#include "homepage.h"
+#include <WebServer.h>
 
 DFRobot_AHT20 aht20; //creating instance of aht20 sensor as ah20
 Servo servo1; // creating instance of servo motor as servo1
@@ -19,7 +21,7 @@ const int MoistureDryThreshold = 500;
 const int MoistureWetThreshold = 4095 ;
 const int MoistureMaximum = 4095;
 
- const int TimerTimeMS = 15000;
+ const int TimerTimeMS = 20000;
  hw_timer_t *timer =  NULL;
 
 int MoistureValue = 0;
@@ -30,6 +32,8 @@ char pass[] = SECRET_PASS;   // your network password
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
 WiFiClient  client;
+
+WebServer server(80);
 
 unsigned long myChannelNumber = SECRET_CH_ID;
 const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
@@ -48,6 +52,16 @@ void ARDUINO_ISR_ATTR onTimer(){
   
 }
 
+void handleRoot(){
+  server.send(200,"text/html", homepage);
+}
+
+void handleNotFound(){
+  server.send(404, "text/plain","404: Not Found");
+}
+
+
+
 void setup() {
   Serial.begin(115200);  //Initialize serial
   while (!Serial) {
@@ -55,6 +69,24 @@ void setup() {
   }
 
   WiFi.mode(WIFI_STA);
+
+  
+
+  server.on("/", HTTP_GET, handleRoot);
+
+  server.on("/getValues", HTTP_GET, [](){
+
+    String json = "{\"temperature\": " +String(celsiusTemp) +
+      ", \"humidity\": " +String(humidityValue) +
+      ", \"moisture\": " +String(MoistureValue) + "}";
+      
+      server.send(200, "application/json", json);
+  });
+
+  server.onNotFound(handleNotFound);
+  
+  server.begin();
+
 
   ThingSpeak.begin(client);// Initialize ThingSpeak
 
@@ -89,7 +121,11 @@ void loop() {
       delay(5000);
     }
     Serial.println("\nConnected.");
+    Serial.println(WiFi.localIP());
   }
+
+
+  server.handleClient();
 
 /*
   digitalWrite(fanEnable, HIGH);
