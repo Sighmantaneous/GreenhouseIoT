@@ -44,6 +44,8 @@ float celsiusTemp;
 float humidityValue;
 bool Window = false;
 int WindowTime;
+int fanTime = 0;
+int angle ;
 
 bool shouldUpdate = false ;
 
@@ -101,7 +103,6 @@ void setup() {
   pinMode(LED, OUTPUT);
   pinMode(fanEnable, OUTPUT);
   pinMode(pumpEnable, OUTPUT);
-  pinMode(servoPin, OUTPUT);
   pinMode(MoistureSensor, INPUT);
 
   timer = timerBegin(1000000);//Timer Freq 10Mhz
@@ -132,17 +133,20 @@ void loop() {
   delay(5000);
   digitalWrite(fanEnable, LOW);
 */
- 
-  if(shouldUpdate==true){
-  shouldUpdate = false;
-  
+
   celsiusTemp = tempGet();
   humidityValue = humidGet();
   MoistureValue = readMoisture();
-
-  Serial.println(celsiusTemp);
+   Serial.println(celsiusTemp);
   Serial.println(MoistureValue);
   Serial.println(humidityValue);
+
+  tempCheck(celsiusTemp);
+
+ 
+  if(shouldUpdate==true){
+  shouldUpdate = false;
+
    thingSpeak();
   }
 
@@ -191,30 +195,41 @@ int readMoisture() {
   return percentMoisture;
 }
 //function to see if window should be open based on temp
-float tempCheck(float celsiusTemp, bool Window) {
-  //Serial.println("Entered Function tempCheck");
+float tempCheck(float celsiusTemp) {
   if (celsiusTemp > 21) {
-    servo1.write(WindowOpen);
-    Serial.println(WindowOpen);
-    Window = true;
-    delay(1000);
+
+      Window = true ;
+      servo1.attach(servoPin);
+
+    if(Window && angle < 180){
+    for (int i = 0; i <= 180; i += 5) {
+    servo1.write(i);
+    angle = i;
+    delay(50);
   }
-  if (celsiusTemp > 22) {
-    for (int i = 0; i < 10 ; i++) {
-      digitalWrite(LED, HIGH);
-      delay(1000);
-      digitalWrite(LED, LOW);
-      delay(1000);
+   
     }
+      fanTime++;
+      digitalWrite(fanEnable, HIGH);
   }
-  else if (celsiusTemp < 20 || WindowTime > 1200 )
+
+  else if (celsiusTemp < 20 || fanTime > 15 )
   {
-    servo1.write(WindowClosed);
-    Serial.println("Window is Closed");
-    Window = false;
-    WindowTime = 0;
+    if(Window){
+    for (int i = 180; i >= 0; i -= 5) {
+    servo1.write(i);
+    delay(50);
+    angle = i;
+  }
+   Window =  false ;
+   servo1.detach();
+    }
+    digitalWrite(fanEnable, LOW);
+
+    fanTime = 0;
     delay(100);
   }
+  return 0;
 }
 
   void thingSpeak(){
