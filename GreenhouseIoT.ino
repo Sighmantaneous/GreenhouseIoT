@@ -7,6 +7,7 @@
 #include <ESP32Servo.h>
 #include "homepage.h"
 #include <WebServer.h>
+#include "esp_sleep.h"
 
 DFRobot_AHT20 aht20; //creating instance of aht20 sensor as ah20
 Servo servo1; // creating instance of servo motor as servo1
@@ -21,8 +22,10 @@ const int MoistureDryThreshold = 500;
 const int MoistureWetThreshold = 4095 ;
 const int MoistureMaximum = 4095;
 
- const int TimerTimeMS = 20000;
+ const int TimerTimeMS = 5000;
  hw_timer_t *timer =  NULL;
+
+ const uint64_t sleepUS = 10 * 1000000ULL;
 
 int MoistureValue = 0;
 int AnalogMoisture = 0;
@@ -47,6 +50,8 @@ int WindowTime;
 int fanTime = 0;
 int angle ;
 
+int sleepTester = 1;
+
 bool shouldUpdate = false ;
 
 void ARDUINO_ISR_ATTR onTimer(){
@@ -62,6 +67,11 @@ void handleNotFound(){
   server.send(404, "text/plain","404: Not Found");
 }
 
+float tempGet();
+float humidGet();
+int readMoisture();
+float tempCheck(float);
+void thingSpeak();
 
 
 void setup() {
@@ -71,6 +81,10 @@ void setup() {
   }
 
   WiFi.mode(WIFI_STA);
+
+
+
+  Serial.println("Woke from sleep");
 
   
 
@@ -127,28 +141,35 @@ void loop() {
 
 
   server.handleClient();
-
+  delay(1100);
 /*
   digitalWrite(fanEnable, HIGH);
   delay(5000);
   digitalWrite(fanEnable, LOW);
-*/
 
+*/
+  
   celsiusTemp = tempGet();
   humidityValue = humidGet();
   MoistureValue = readMoisture();
-   Serial.println(celsiusTemp);
-  Serial.println(MoistureValue);
-  Serial.println(humidityValue);
-
-  tempCheck(celsiusTemp);
-
- 
+  
   if(shouldUpdate==true){
-  shouldUpdate = false;
-
-   thingSpeak();
+    
+    shouldUpdate =false;
+    Serial.println(celsiusTemp);
+    Serial.println(MoistureValue);
+    Serial.println(humidityValue);
+    tempCheck(celsiusTemp);
+    thingSpeak();
+    sleepTester ++;
   }
+  
+  Serial.println(sleepTester);
+
+  esp_sleep_enable_timer_wakeup(sleepUS);
+
+
+  esp_light_sleep_start();
 
 }
 

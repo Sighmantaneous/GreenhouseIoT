@@ -26,7 +26,7 @@ String homepage = R"rawliteral(
     .card {
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       padding: 15px;
       
     }
@@ -58,7 +58,7 @@ String homepage = R"rawliteral(
 
     <!-- Temperature Section -->
     <div class="card">
-      <iframe src="https://thingspeak.com/channels/2712952/charts/1?bgcolor=%23dff2ff&color=%23d62020&days=1&dynamic=true&title=Temperature&type=column&xaxis=Celsius&yaxis=Time&yaxismax=35&yaxismin=05"width="800" 
+      <iframe src="https://thingspeak.mathworks.com/channels/2712952/charts/1?bgcolor=%23ffffff&color=%23d62020&days=3&dynamic=true&title=Temperature&type=spline&xaxis=Celsius&yaxis=Time&yaxismax=35&yaxismin=05"width="800" 
       height="600"></iframe>
       <div class="label">Temperature</div>
       <div class="value" id="tempValue">-- °C</div>
