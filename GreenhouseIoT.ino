@@ -1,16 +1,20 @@
 
 //
 #include <WiFi.h>
-#include "secrets.h"// where SSID and password are stored 
-#include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
+#include "secrets.h"     // where SSID and password are stored
+#include "ThingSpeak.h"  // always include thingspeak header file after other header files and custom macros
 #include "DFRobot_AHT20.h"
 #include <ESP32Servo.h>
 #include "homepage.h"
 #include <WebServer.h>
 #include "esp_sleep.h"
 
-DFRobot_AHT20 aht20; //creating instance of aht20 sensor as ah20
-Servo servo1; // creating instance of servo motor as servo1
+DFRobot_AHT20 aht20;  //creating instance of aht20 sensor as ah20
+Servo servo1;         // creating instance of servo motor as servo1
+
+RTC_DATA_ATTR unsigned long lightTimer = 0;
+const unsigned long daySeconds = 86400;
+const unsigned long lightOnSeconds = 28800;
 
 const int fanEnable = 17;
 const int pumpEnable = 16;
@@ -19,27 +23,27 @@ const int LED = 26;
 
 const int MoistureSensor = 34;
 const int MoistureDryThreshold = 500;
-const int MoistureWetThreshold = 4095 ;
+const int MoistureWetThreshold = 4095;
 const int MoistureMaximum = 4095;
 
- const int TimerTimeMS = 5000;
- hw_timer_t *timer =  NULL;
+const int TimerTimeMS = 5000;
+hw_timer_t *timer = NULL;
 
- const uint64_t sleepUS = 10 * 1000000ULL;
+const uint64_t sleepUS = 10 * 1000000;
 
 int MoistureValue = 0;
 int AnalogMoisture = 0;
 
-char ssid[] = SECRET_SSID;   // your network SSID (name)
-char pass[] = SECRET_PASS;   // your network password
-int keyIndex = 0;            // your network key Index number (needed only for WEP)
+char ssid[] = SECRET_SSID;  // your network SSID (name)
+char pass[] = SECRET_PASS;  // your network password
+int keyIndex = 0;           // your network key Index number (needed only for WEP)
 
-WiFiClient  client;
+WiFiClient client;
 
 WebServer server(80);
 
 unsigned long myChannelNumber = SECRET_CH_ID;
-const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
+const char *myWriteAPIKey = SECRET_WRITE_APIKEY;
 
 const int WindowOpen = 180;
 const int WindowClosed = 0;
@@ -48,23 +52,22 @@ float humidityValue;
 bool Window = false;
 int WindowTime;
 int fanTime = 0;
-int angle ;
+int angle;
 
 int sleepTester = 1;
 
-bool shouldUpdate = false ;
+bool shouldUpdate = false;
 
-void ARDUINO_ISR_ATTR onTimer(){
-     shouldUpdate = true;
-  
+void ARDUINO_ISR_ATTR onTimer() {
+  shouldUpdate = true;
 }
 
-void handleRoot(){
-  server.send(200,"text/html", homepage);
+void handleRoot() {
+  server.send(200, "text/html", homepage);
 }
 
-void handleNotFound(){
-  server.send(404, "text/plain","404: Not Found");
+void handleNotFound() {
+  server.send(404, "text/plain", "404: Not Found");
 }
 
 float tempGet();
@@ -77,34 +80,33 @@ void thingSpeak();
 void setup() {
   Serial.begin(115200);  //Initialize serial
   while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo native USB port only
+    ;  // wait for serial port to connect. Needed for Leonardo native USB port only
   }
 
   WiFi.mode(WIFI_STA);
 
-
+  if (lightTimer == 0) {
+    lightTimer = esp_timer_get_time() / 1000000 ; //get in seconds
+  }
 
   Serial.println("Woke from sleep");
 
-  
+
 
   server.on("/", HTTP_GET, handleRoot);
 
-  server.on("/getValues", HTTP_GET, [](){
+  server.on("/getValues", HTTP_GET, []() {
+    String json = "{\"temperature\": " + String(celsiusTemp) + ", \"humidity\": " + String(humidityValue) + ", \"moisture\": " + String(MoistureValue) + "}";
 
-    String json = "{\"temperature\": " +String(celsiusTemp) +
-      ", \"humidity\": " +String(humidityValue) +
-      ", \"moisture\": " +String(MoistureValue) + "}";
-      
-      server.send(200, "application/json", json);
+    server.send(200, "application/json", json);
   });
 
   server.onNotFound(handleNotFound);
-  
+
   server.begin();
 
 
-  ThingSpeak.begin(client);// Initialize ThingSpeak
+  ThingSpeak.begin(client);  // Initialize ThingSpeak
 
   servo1.attach(servoPin);
 
@@ -119,19 +121,22 @@ void setup() {
   pinMode(pumpEnable, OUTPUT);
   pinMode(MoistureSensor, INPUT);
 
-  timer = timerBegin(1000000);//Timer Freq 10Mhz
+  timer = timerBegin(1000000);  //Timer Freq 10Mhz
   timerAttachInterrupt(timer, &onTimer);
-  timerAlarm(timer,TimerTimeMS *1000 ,true,0);
+  timerAlarm(timer, TimerTimeMS * 1000, true, 0);
 }
 
 void loop() {
 
+  unsigned long timeNow = esp_timer_get_time() / 1000000;
+  unsigned long inTimeRange = (timeNow - lightTimer) % daySeconds ;
   // Connect or reconnect to WiFi
+
   if (WiFi.status() != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(SECRET_SSID);
     while (WiFi.status() != WL_CONNECTED) {
-      WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
+      WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network. Change this line if using open or WEP network
       Serial.print(".");
       delay(5000);
     }
@@ -140,37 +145,38 @@ void loop() {
   }
 
 
+
   server.handleClient();
   delay(1100);
-/*
+  /*
   digitalWrite(fanEnable, HIGH);
   delay(5000);
   digitalWrite(fanEnable, LOW);
-
 */
-  
+  digitalWrite(pumpEnable,HIGH);
+
+  if(inTimeRange < lightOnSeconds){
+
+    digitalWrite(LED,HIGH);
+  } 
+  else{
+    digitalWrite(LED,LOW);
+  }
+
+
   celsiusTemp = tempGet();
   humidityValue = humidGet();
   MoistureValue = readMoisture();
-  
-  if(shouldUpdate==true){
-    
-    shouldUpdate =false;
+
+  if (shouldUpdate == true) {
+
+    shouldUpdate = false;
     Serial.println(celsiusTemp);
     Serial.println(MoistureValue);
     Serial.println(humidityValue);
     tempCheck(celsiusTemp);
     thingSpeak();
-    sleepTester ++;
   }
-  
-  Serial.println(sleepTester);
-
-  esp_sleep_enable_timer_wakeup(sleepUS);
-
-
-  esp_light_sleep_start();
-
 }
 
 //function to calculate the temp and humidity
@@ -202,9 +208,9 @@ int readMoisture() {
 
   // Ensure the value stays within 0-100% range
   if (percentMoisture < 0) {
-    percentMoisture  = 0;
-  } else if (percentMoisture  > 100) {
-    percentMoisture  = 100;
+    percentMoisture = 0;
+  } else if (percentMoisture > 100) {
+    percentMoisture = 100;
   }
 
   // Debugging Prints
@@ -219,31 +225,29 @@ int readMoisture() {
 float tempCheck(float celsiusTemp) {
   if (celsiusTemp > 21) {
 
-      Window = true ;
-      servo1.attach(servoPin);
+    Window = true;
+    servo1.attach(servoPin);
 
-    if(Window && angle < 180){
-    for (int i = 0; i <= 180; i += 5) {
-    servo1.write(i);
-    angle = i;
-    delay(50);
-  }
-   
+    if (Window && angle < 180) {
+      for (int i = 0; i <= 180; i += 5) {
+        servo1.write(i);
+        angle = i;
+        delay(50);
+      }
     }
-      fanTime++;
-      digitalWrite(fanEnable, HIGH);
+    fanTime++;
+    digitalWrite(fanEnable, HIGH);
   }
 
-  else if (celsiusTemp < 20 || fanTime > 15 )
-  {
-    if(Window){
-    for (int i = 180; i >= 0; i -= 5) {
-    servo1.write(i);
-    delay(50);
-    angle = i;
-  }
-   Window =  false ;
-   servo1.detach();
+  else if (celsiusTemp < 20 || fanTime > 15) {
+    if (Window) {
+      for (int i = 180; i >= 0; i -= 5) {
+        servo1.write(i);
+        delay(50);
+        angle = i;
+      }
+      Window = false;
+      servo1.detach();
     }
     digitalWrite(fanEnable, LOW);
 
@@ -253,7 +257,7 @@ float tempCheck(float celsiusTemp) {
   return 0;
 }
 
-  void thingSpeak(){
+void thingSpeak() {
 
   ThingSpeak.setField(1, celsiusTemp);
   ThingSpeak.setField(2, humidityValue);
@@ -268,11 +272,8 @@ float tempCheck(float celsiusTemp) {
 
   if (x == 200) {
     Serial.println("Channel update successful.");
-  }
-  else {
+  } else {
     Serial.println("Problem updating channel. HTTP error code " + String(x));
   }
   delay(1000);
-
- }
-  
+}
