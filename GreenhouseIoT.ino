@@ -24,12 +24,10 @@ const int LED = 26;
 const int MoistureSensor = 34;
 const int MoistureDryThreshold = 500;
 const int MoistureWetThreshold = 4095;
-const int MoistureMaximum = 4095;
 
-const int TimerTimeMS = 5000;
+const int TimerTimeMS = 20000;
 hw_timer_t *timer = NULL;
 
-const uint64_t sleepUS = 10 * 1000000;
 
 int MoistureValue = 0;
 int AnalogMoisture = 0;
@@ -53,10 +51,8 @@ bool Window = false;
 int WindowTime;
 int fanTime = 0;
 int angle;
-
-int sleepTester = 1;
-
 bool shouldUpdate = false;
+
 
 void ARDUINO_ISR_ATTR onTimer() {
   shouldUpdate = true;
@@ -73,20 +69,21 @@ void handleNotFound() {
 float tempGet();
 float humidGet();
 int readMoisture();
-float tempCheck(float);
+float tempCheck(float temp);
+float soilCheck(float MoistureValue);
 void thingSpeak();
 
 
 void setup() {
   Serial.begin(115200);  //Initialize serial
-  while (!Serial) {
+  while (!Serial) { 
     ;  // wait for serial port to connect. Needed for Leonardo native USB port only
   }
 
   WiFi.mode(WIFI_STA);
 
   if (lightTimer == 0) {
-    lightTimer = esp_timer_get_time() / 1000000 ; //get in seconds
+    lightTimer = esp_timer_get_time() / 1000000;  //get in seconds
   }
 
   Serial.println("Woke from sleep");
@@ -123,15 +120,15 @@ void setup() {
 
   timer = timerBegin(1000000);  //Timer Freq 10Mhz
   timerAttachInterrupt(timer, &onTimer);
-  timerAlarm(timer, TimerTimeMS * 1000, true, 0);
+  timerAlarm(timer, TimerTimeMS, true, 0);
 }
 
 void loop() {
 
   unsigned long timeNow = esp_timer_get_time() / 1000000;
-  unsigned long inTimeRange = (timeNow - lightTimer) % daySeconds ;
-  // Connect or reconnect to WiFi
+  unsigned long inTimeRange = (timeNow - lightTimer) % daySeconds;
 
+  // Connect or reconnect to WiFi
   if (WiFi.status() != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(SECRET_SSID);
@@ -143,9 +140,6 @@ void loop() {
     Serial.println("\nConnected.");
     Serial.println(WiFi.localIP());
   }
-
-
-
   server.handleClient();
   delay(1100);
   /*
@@ -153,28 +147,25 @@ void loop() {
   delay(5000);
   digitalWrite(fanEnable, LOW);
 */
-  digitalWrite(pumpEnable,HIGH);
 
-  if(inTimeRange < lightOnSeconds){
+  if (inTimeRange < lightOnSeconds) {
 
-    digitalWrite(LED,HIGH);
-  } 
-  else{
-    digitalWrite(LED,LOW);
+    digitalWrite(LED, HIGH);
+  } else {
+    digitalWrite(LED, LOW);
   }
-
-
   celsiusTemp = tempGet();
   humidityValue = humidGet();
   MoistureValue = readMoisture();
 
   if (shouldUpdate == true) {
-
     shouldUpdate = false;
     Serial.println(celsiusTemp);
     Serial.println(MoistureValue);
     Serial.println(humidityValue);
     tempCheck(celsiusTemp);
+    soilCheck(MoistureValue);
+    
     thingSpeak();
   }
 }
@@ -257,19 +248,28 @@ float tempCheck(float celsiusTemp) {
   return 0;
 }
 
+float soilCheck(float MoistureValue){
+
+  if(MoistureValue < 20){
+
+    digitalWrite(pumpEnable, HIGH);
+    for(int i = 0; i <5;i++){
+      delay(1000);
+    }
+    digitalWrite(pumpEnable, LOW);
+  }
+  return 0;
+}
+
 void thingSpeak() {
 
   ThingSpeak.setField(1, celsiusTemp);
   ThingSpeak.setField(2, humidityValue);
   ThingSpeak.setField(3, MoistureValue);
-  // Write to ThingSpeak. There are up to 8 fields in a channel, allowing you to store up to 8 different
-  // pieces of information in a channel.  Here, we write to field 1.
 
   int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
   Serial.println("ThingSpeak Response Code: ");
   Serial.println(x);
-
-
   if (x == 200) {
     Serial.println("Channel update successful.");
   } else {
