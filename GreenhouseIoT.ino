@@ -1,71 +1,65 @@
 
 //
 #include <WiFi.h>
-#include "secrets.h"     // where SSID and password are stored
-#include "ThingSpeak.h"  // always include thingspeak header file after other header files and custom macros
-#include "DFRobot_AHT20.h"
+#include <WebServer.h>
 #include <ESP32Servo.h>
 #include "homepage.h"
-#include <WebServer.h>
+#include "secrets.h"     // where SSID and password are stored
+#include "ThingSpeak.h"  
+#include "DFRobot_AHT20.h"
 #include "esp_sleep.h"
 
-DFRobot_AHT20 aht20;  //creating instance of aht20 sensor as ah20
-Servo servo1;         // creating instance of servo motor as servo1
+//Instance Creation
+DFRobot_AHT20 aht20;  
+Servo servo1;         
+WiFiClient client;
+WebServer server(80);
 
-RTC_DATA_ATTR unsigned long lightTimer = 0;
+//variables for light
+unsigned long lightTimer = 0;
 const unsigned long daySeconds = 86400;
 const unsigned long lightOnSeconds = 28800;
 
+//GPIO pin variables
 const int fanEnable = 17;
 const int pumpEnable = 16;
 const int servoPin = 14;
 const int LED = 26;
-
 const int MoistureSensor = 34;
+
+
+//ADC moisture variables
 const int MoistureDryThreshold = 500;
 const int MoistureWetThreshold = 4095;
+int AnalogMoisture = 0;
 
+//timer variables
 const int TimerTimeMS = 20000;
 hw_timer_t *timer = NULL;
 
-
-int MoistureValue = 0;
-int AnalogMoisture = 0;
-
-char ssid[] = SECRET_SSID;  // your network SSID (name)
-char pass[] = SECRET_PASS;  // your network password
-int keyIndex = 0;           // your network key Index number (needed only for WEP)
-
-WiFiClient client;
-
-WebServer server(80);
-
+//WiFi variables
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
+int keyIndex = 0;
+//Thingspeak variables
 unsigned long myChannelNumber = SECRET_CH_ID;
 const char *myWriteAPIKey = SECRET_WRITE_APIKEY;
 
-const int WindowOpen = 180;
-const int WindowClosed = 0;
+
+//changing global variables
 float celsiusTemp;
 float humidityValue;
-bool Window = false;
-int WindowTime;
-int fanTime = 0;
+int MoistureValue ;
 int angle;
+bool Window = false;
 bool shouldUpdate = false;
 
-
+//Interrupt Timer
 void ARDUINO_ISR_ATTR onTimer() {
   shouldUpdate = true;
 }
 
-void handleRoot() {
-  server.send(200, "text/html", homepage);
-}
-
-void handleNotFound() {
-  server.send(404, "text/plain", "404: Not Found");
-}
-
+//Function declarations
 float tempGet();
 float humidGet();
 int readMoisture();
@@ -75,21 +69,15 @@ void thingSpeak();
 
 
 void setup() {
+
   Serial.begin(115200);  //Initialize serial
-  while (!Serial) { 
-    ;  // wait for serial port to connect. Needed for Leonardo native USB port only
+  while (!Serial) {
+    ; 
   }
 
   WiFi.mode(WIFI_STA);
 
-  if (lightTimer == 0) {
-    lightTimer = esp_timer_get_time() / 1000000;  //get in seconds
-  }
-
-  Serial.println("Woke from sleep");
-
-
-
+//Webpage config
   server.on("/", HTTP_GET, handleRoot);
 
   server.on("/getValues", HTTP_GET, []() {
@@ -99,31 +87,35 @@ void setup() {
   });
 
   server.onNotFound(handleNotFound);
-
   server.begin();
-
 
   ThingSpeak.begin(client);  // Initialize ThingSpeak
 
   servo1.attach(servoPin);
 
+  //Checking to see if sensor is working
   uint8_t status;
   while ((status = aht20.begin()) != 0) {
     Serial.print("AHT20 sensor initialization failed. error status : ");
     Serial.println(status);
     delay(1000);
   }
+
+
   pinMode(LED, OUTPUT);
   pinMode(fanEnable, OUTPUT);
   pinMode(pumpEnable, OUTPUT);
   pinMode(MoistureSensor, INPUT);
 
+  //Timer config
   timer = timerBegin(1000000);  //Timer Freq 10Mhz
   timerAttachInterrupt(timer, &onTimer);
   timerAlarm(timer, TimerTimeMS, true, 0);
 }
 
 void loop() {
+
+  //local variables
 
   unsigned long timeNow = esp_timer_get_time() / 1000000;
   unsigned long inTimeRange = (timeNow - lightTimer) % daySeconds;
@@ -140,20 +132,9 @@ void loop() {
     Serial.println("\nConnected.");
     Serial.println(WiFi.localIP());
   }
+
   server.handleClient();
-  delay(1100);
-  /*
-  digitalWrite(fanEnable, HIGH);
-  delay(5000);
-  digitalWrite(fanEnable, LOW);
-*/
 
-  if (inTimeRange < lightOnSeconds) {
-
-    digitalWrite(LED, HIGH);
-  } else {
-    digitalWrite(LED, LOW);
-  }
   celsiusTemp = tempGet();
   humidityValue = humidGet();
   MoistureValue = readMoisture();
@@ -165,10 +146,19 @@ void loop() {
     Serial.println(humidityValue);
     tempCheck(celsiusTemp);
     soilCheck(MoistureValue);
-    
     thingSpeak();
   }
+
+  if (inTimeRange < lightOnSeconds) {
+
+    digitalWrite(LED, HIGH);
+  } 
+  else {
+    digitalWrite(LED, LOW);
+  }
 }
+
+//Functions
 
 //function to calculate the temp and humidity
 float tempGet() {
@@ -189,8 +179,8 @@ float humidGet() {
 int readMoisture() {
 
   long sum = 0;
-  for (int i = 0; i < 10; i++) {
-    sum += analogRead(MoistureSensor);
+  for (int i = 0; i < 10; i++) { // Taking multiple samples to elimate spikes 
+    sum += analogRead(MoistureSensor); 
     delay(50);
   }
   AnalogMoisture = sum / 10;
@@ -226,11 +216,11 @@ float tempCheck(float celsiusTemp) {
         delay(50);
       }
     }
-    fanTime++;
+    
     digitalWrite(fanEnable, HIGH);
   }
 
-  else if (celsiusTemp < 20 || fanTime > 15) {
+  else if (celsiusTemp < 20 ) {
     if (Window) {
       for (int i = 180; i >= 0; i -= 5) {
         servo1.write(i);
@@ -242,25 +232,24 @@ float tempCheck(float celsiusTemp) {
     }
     digitalWrite(fanEnable, LOW);
 
-    fanTime = 0;
     delay(100);
   }
   return 0;
 }
+// checking to see if pump needs to be engaged
+float soilCheck(float MoistureValue) {
 
-float soilCheck(float MoistureValue){
-
-  if(MoistureValue < 20){
+  if (MoistureValue < 30) {
 
     digitalWrite(pumpEnable, HIGH);
-    for(int i = 0; i <5;i++){
+    for (int i = 0; i < 20; i++) {
       delay(1000);
     }
     digitalWrite(pumpEnable, LOW);
   }
   return 0;
 }
-
+//function that sends data to thingspeak
 void thingSpeak() {
 
   ThingSpeak.setField(1, celsiusTemp);
@@ -276,4 +265,12 @@ void thingSpeak() {
     Serial.println("Problem updating channel. HTTP error code " + String(x));
   }
   delay(1000);
+}
+
+void handleRoot() {
+  server.send(200, "text/html", homepage);
+}
+
+void handleNotFound() {
+  server.send(404, "text/plain", "404: Not Found");
 }
