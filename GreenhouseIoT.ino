@@ -30,7 +30,7 @@ const int MoistureSensor = 34;
 
 //ADC moisture variables
 const int MoistureDryThreshold = 500;
-const int MoistureWetThreshold = 4095;
+const int MoistureWetThreshold = 3500;
 int AnalogMoisture = 0;
 
 //timer variables
@@ -77,6 +77,9 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
 
+
+  lightTimer = esp_timer_get_time() / 1000000;
+
 //Webpage config
   server.on("/", HTTP_GET, handleRoot);
 
@@ -110,7 +113,7 @@ void setup() {
   //Timer config
   timer = timerBegin(1000000);  //Timer Freq 10Mhz
   timerAttachInterrupt(timer, &onTimer);
-  timerAlarm(timer, TimerTimeMS, true, 0);
+  timerAlarm(timer, TimerTimeMS * 1000, true, 0);
 }
 
 void loop() {
@@ -152,6 +155,7 @@ void loop() {
   if (inTimeRange < lightOnSeconds) {
 
     digitalWrite(LED, HIGH);
+    
   } 
   else {
     digitalWrite(LED, LOW);
@@ -184,7 +188,7 @@ int readMoisture() {
     delay(50);
   }
   AnalogMoisture = sum / 10;
-  Serial.println(AnalogMoisture);
+ 
   int percentMoisture = 100 * (AnalogMoisture - 1500) / (MoistureWetThreshold - MoistureDryThreshold);
 
   // Ensure the value stays within 0-100% range
@@ -194,17 +198,12 @@ int readMoisture() {
     percentMoisture = 100;
   }
 
-  // Debugging Prints
-  Serial.print("Raw Moisture Sensor Value: ");
-  Serial.println(AnalogMoisture);
-  Serial.print("Calculated Moisture Percentage: ");
-  Serial.println(percentMoisture);
 
   return percentMoisture;
 }
 //function to see if window should be open based on temp
 float tempCheck(float celsiusTemp) {
-  if (celsiusTemp > 21) {
+  if (celsiusTemp > 22) {
 
     Window = true;
     servo1.attach(servoPin);

@@ -58,24 +58,21 @@ String homepage = R"rawliteral(
 
     <!-- Temperature Section -->
     <div class="card">
-      <iframe src="https://thingspeak.mathworks.com/channels/2712952/charts/1?bgcolor=%23ffffff&color=%23d62020&days=3&dynamic=true&title=Temperature&type=spline&xaxis=Celsius&yaxis=Time&yaxismax=35&yaxismin=05"width="800" 
-      height="600"></iframe>
+      <iframe src="https://thingspeak.com/channels/2712952/charts/1?bgcolor=%23ffffff&color=%23008080&days=1&dynamic=true&results=60&title=Temperature&type=spline&xaxis=Time&yaxis=Celsius&yaxismax=35&yaxismin=05"></iframe>>
       <div class="label">Temperature</div>
       <div class="value" id="tempValue">-- °C</div>
     </div>
 
     <!-- Humidity Section -->
     <div class="card">
-      <iframe src="https://thingspeak.com/channels/2712952/charts/2?bgcolor=%23dff2ff&color=%23d62020&days=1&dynamic=true&title=Air+Moisture&type=line&yaxismax=99&yaxismin=40" width="800" 
-      height="600"></iframe>
+      <iframe src="https://thingspeak.com/channels/2712952/charts/2?bgcolor=%23ffffff&color=%23008080&days=1&dynamic=true&results=40&title=Humidity&type=spline&xaxis=Time&yaxis=Humidity+%25&yaxismax=99&yaxismin=20"></iframe>
       <div class="label">Humidity</div>
       <div class="value" id="humidityValue">-- %</div>
     </div>
 
     <!-- Soil Moisture Section -->
     <div class="card">
-      <iframe src="https://thingspeak.com/channels/2712952/charts/3?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15" width="800" 
-      height="600"></iframe>
+      <iframe src="https://thingspeak.com/channels/2712952/charts/3?bgcolor=%23ffffff&color=%23008080&days=1&dynamic=true&results=60&title=Soil+Moisture&type=spline&xaxis=Time&yaxis=Moisture+%25&yaxismax=100&yaxismin=05"></iframe>
       <div class="label">Soil Moisture</div>
       <div class="value" id="moistureValue">-- %</div>
     </div>
