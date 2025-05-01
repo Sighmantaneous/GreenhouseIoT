@@ -21,6 +21,32 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Sensors + Hardware used
 
 - ESP32:
