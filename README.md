@@ -56,7 +56,7 @@ Sensors + Hardware used
     The AHT20 provides both temp and humidy readings via an I²C interface on single sensor.
 
 - Peristaltic Pump:
-    Used to irrigate soil if moisture level drops below certain value (25% in this case)
+    Used to irrigate soil if moisture level drops below certain value (30% in this case)
 
 - DC fan(x2):
     Used to help remove build up of heat and circulate fresher air in the greenhouse, when window is open. 
