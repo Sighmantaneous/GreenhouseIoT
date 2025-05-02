@@ -44,11 +44,6 @@
 
 
 
-
-
-# This is the sample readme for my IoT smart garden projects 
-
-<<<<<<< HEAD
 Sensors + Hardware used
 
 - ESP32:
@@ -74,7 +69,4 @@ Sensors + Hardware used
     FS90 is a small servo motor that uses PWM(pusle wave modulation) that is capable of 180° rotation. Used here to open/close window 
 
 
-=======
-# Description of how sensors and code will be added here
->>>>>>> 3cab1d0b90d9e4760a65242ad08bb4bf88628455
 
