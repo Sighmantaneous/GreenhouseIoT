@@ -1,5 +1,4 @@
 
-//
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESP32Servo.h>
@@ -21,8 +20,8 @@ const unsigned long daySeconds = 86400;
 const unsigned long lightOnSeconds = 28800;
 
 //GPIO pin variables
-const int fanEnable = 17;
-const int pumpEnable = 16;
+const int fanEnable = 16;
+const int pumpEnable = 17;
 const int servoPin = 14;
 const int LED = 26;
 const int MoistureSensor = 34;
@@ -203,7 +202,7 @@ int readMoisture() {
 }
 //function to see if window should be open based on temp
 float tempCheck(float celsiusTemp) {
-  if (celsiusTemp > 22) {
+  if (celsiusTemp > 23) {
 
     Window = true;
     servo1.attach(servoPin);
@@ -219,7 +218,7 @@ float tempCheck(float celsiusTemp) {
     digitalWrite(fanEnable, HIGH);
   }
 
-  else if (celsiusTemp < 20 ) {
+  else if (celsiusTemp < 22 ) {
     if (Window) {
       for (int i = 180; i >= 0; i -= 5) {
         servo1.write(i);
