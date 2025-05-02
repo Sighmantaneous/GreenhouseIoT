@@ -1,59 +1,68 @@
+// To create literal strings stored in flash memory enclose your HTML code between 
+// F(R"=====( HTML code here )=====");
+// If you have 1 reading then you probably have 2 literal strings
+// If you have 2 readings then you probably have 3 literal strings etc.
 
-String homepage = R"rawliteral(
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" > <!-- Needed for Screenreaders !-->
 <head>
-  <meta charset="utf8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Herbinside</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    
-    }
+<!-- UTF-8 character set covers most characters in the world -->
+ <meta charset="utf-8">
+ <!-- Make page respond to screen size !-->
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--Include a Title. Used by Search Engines -->
+<title> Temperature Reading WebServer </title>
+<style>
+ 
+ <!--choose good contrast between background and foreground colours
+ body { 
+background-color: DodgerBlue
+ }
+.flex-Container{
+ display: flex;
+ flex-direction: column;
+ background-color: DodgerBlue;
+ align-items: center;
+ }
+ h1{
+ font: bold;
+ font-size: 40px;
+ font-family: Arial;
+ color: navy;
+text-align: center;
+ }
+ p{
+ font-size: 25px;
+ font-family: Arial;
+ color: navy;
+text-align: center;
+ } 
+ th, td {
+ font-size: 25px;
+ padding: 8px;
+ text-align: left;
 
-    .dashboard {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 15px;
-      
-    }
-
-    .label {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-top: 15px;
-      color: #333;
-    }
-
-    .value {
-      font-size: 2em;
-      color: #0077aa;
-      margin-top: 5px;
-    }
-
-    iframe {
-      border: 1px solid #cccccc;
-      width: 450px;  
-      height: 250px; 
-    }
-  </style>
+ border-bottom: 1px solid #ddd;
+}
+</style>
 </head>
 <body>
-  <h1>🌿 Herbinside IoT Greenhouse</h1>
+<div class="flex-Container">
+<h1> Temperature Example Website </h1>
+ 
+<p>Welcome to my website displaying the temperature in ATU</p>
+ 
+<table>
+ <tr>
+ <th>Sensor</th>
+ <th>Value</th>
+ <th>Unit</th>
+ </tr>
+ <tr>
+ <td>Temperature</td>
+ <td> 23.4</td> 
 
+<<<<<<< HEAD
   <div class="dashboard">
 
     <!-- Temperature Section -->
@@ -112,6 +121,14 @@ String homepage = R"rawliteral(
     fetchData(); 
 
   </script>
+=======
+String homePagePart2 = F(R"=====( <td>Degree Cel</td>
+ </tr>
+ </table>
+ </div>
+>>>>>>> 3cab1d0b90d9e4760a65242ad08bb4bf88628455
 </body>
 </html>
-  )rawliteral";
+)=====");
+
+
