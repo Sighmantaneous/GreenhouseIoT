@@ -32,9 +32,7 @@ const int MoistureDryThreshold = 500;
 const int MoistureWetThreshold = 3500;
 int AnalogMoisture = 0;
 
-//timer variables
-const int TimerTimeMS = 20000;
-hw_timer_t *timer = NULL;
+
 
 //WiFi variables
 char ssid[] = SECRET_SSID;
@@ -52,6 +50,10 @@ int MoistureValue ;
 int angle;
 bool Window = false;
 bool shouldUpdate = false;
+
+//timer variables
+const int TimerTimeMS = 20000;
+hw_timer_t *timer = NULL;
 
 //Interrupt Timer
 void ARDUINO_ISR_ATTR onTimer() {
@@ -121,6 +123,14 @@ void loop() {
 
   unsigned long timeNow = esp_timer_get_time() / 1000000;
   unsigned long inTimeRange = (timeNow - lightTimer) % daySeconds;
+  if (inTimeRange < lightOnSeconds) {
+
+    digitalWrite(LED, HIGH);
+    
+  } 
+  else {
+    digitalWrite(LED, LOW);
+  }
 
   // Connect or reconnect to WiFi
   if (WiFi.status() != WL_CONNECTED) {
@@ -151,14 +161,7 @@ void loop() {
     thingSpeak();
   }
 
-  if (inTimeRange < lightOnSeconds) {
-
-    digitalWrite(LED, HIGH);
-    
-  } 
-  else {
-    digitalWrite(LED, LOW);
-  }
+  
 }
 
 //Functions
@@ -188,7 +191,7 @@ int readMoisture() {
   }
   AnalogMoisture = sum / 10;
  
-  int percentMoisture = 100 * (AnalogMoisture - 1500) / (MoistureWetThreshold - MoistureDryThreshold);
+  int percentMoisture = 100 * (AnalogMoisture - MoistureDryThreshold) / (MoistureWetThreshold - MoistureDryThreshold);
 
   // Ensure the value stays within 0-100% range
   if (percentMoisture < 0) {
@@ -227,7 +230,7 @@ float tempCheck(float celsiusTemp) {
       }
       Window = false;
       servo1.detach();
-    }
+    }`
     digitalWrite(fanEnable, LOW);
 
     delay(100);

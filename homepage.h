@@ -14,7 +14,7 @@
 <title> Temperature Reading WebServer </title>
 <style>
  
- <!--choose good contrast between background and foreground colours
+ <!
  body { 
 background-color: DodgerBlue
  }
